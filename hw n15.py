@@ -5,6 +5,8 @@ from db import *
 
 bot=telebot.TeleBot('8094077086:AAH53wloVRhjpXsQffLZqpI5q1kE_aH4BfI')
 temp_data = {}
+admin_data={}
+admins = []
 
 
 @bot.message_handler(commands=['start'])
@@ -13,6 +15,7 @@ def start(message):
     if db.check_user(user_id):
         name = db.check_name(user_id)
         bot.send_message(user_id, f'Добро пожаловать {name}. Что вы хотите сделать?', reply_markup=buttons15.to_do())
+        bot.register_next_step_handler(message, action)
     else:
         bot.send_message(user_id, 'Привет! Давай пройдем регистрацию.\nНапиши свое имя.')
         bot.register_next_step_handler(message, get_name)
@@ -37,6 +40,15 @@ def helper(message):
                               '\nДля отмены уже существующей брони нажмите "Отменить бронь"'
                               '\n\nРады, если это помогло!'
                               '\nПо другим вопросам звоните по номеру +998955678776')
+
+@bot.message_handler(commands=['admin'])
+def admin_message(message):
+    admin_id = 14276038
+    if message.from_user.id == admin_id:
+        bot.send_message(admin_id, 'Добро пожаловать в админ панель!', reply_markup=buttons15.admin_buttons())
+        bot.register_next_step_handler(message, admin_choice)
+    else:
+        bot.send_message(message.from_user.id, 'Ты не админ, сори))')
 
 
 def get_name(message):
@@ -88,7 +100,8 @@ def action(message):
         else:
             bot.send_message(user_id, 'Вы не зарезервировали столик, чтобы его удалить')
     else:
-        bot.send_message(user_id, 'Выберите вариант из кнопок ниже.')
+        bot.send_message(user_id, 'Напишите что-нибудь чтобы вернуться на главную', reply_markup=telebot.types.ReplyKeyboardRemove())
+        bot.register_next_step_handler(message, start)
 
 @bot.callback_query_handler(lambda call: call.data in ['private', 'non-private'])
 def get_type(call):
@@ -96,10 +109,11 @@ def get_type(call):
     types = call.data
     temp_data[user_id] = {'types': types}
     bot.send_message(user_id, 'А теперь выберите количество стульев.', reply_markup=buttons15.inline_chairs())
+
 @bot.callback_query_handler(lambda call: call.data in ['2', '4', '6', '10', '12'])
 def get_chairs(call):
     user_id = call.message.chat.id
-    chairs = call.data
+    chairs = int(call.data)
     type = temp_data[user_id]['types']
     if find_table(chairs, type):
         table_id = show_id(chairs, type)
@@ -108,16 +122,49 @@ def get_chairs(call):
         temp_data.clear()
     else:
         bot.send_message(user_id, 'Такого столика не найдено, посмотрите еще', reply_markup=buttons15.to_do())
+        temp_data.clear()
 
 
+@bot.message_handler(content_types=['text'])
+def admin_choice(message):
+    admin_id = 14276038
+    if message.text == 'Добавить стол':
+        bot.send_message(admin_id, 'Выберите тип стола', reply_markup=buttons15.inline_type_admin())
+        admins.insert(0, message.text)
+    elif message.text == 'Удалить стол':
+        bot.send_message(admin_id, 'Выберите тип стола, который хотите удалить', reply_markup=buttons15.inline_type_admin())
+        admins.insert(0, message.text)
+    else:
+        # bot.send_message(admin_id, 'Работайте через кнопки пожалуйста')
+        bot.send_message(admin_id, 'Напишите что-нибудь чтобы вернуться на главную', reply_markup=telebot.types.ReplyKeyboardRemove())
+        bot.register_next_step_handler(message, start)
 
-# @bot.message_handler(commands=['admin'])
-# def admin_message(message):
-#     admin_id = 14276038
-#     if message.from_user.id == admin_id:
-#         bot.send_message(admin_id, 'Добро пожаловать в админ панель!', reply_markup=buttons15.admin_buttons())
-#         bot.register_next_step_handler(message, admin_choice)
-
+@bot.callback_query_handler(lambda call: call.data in ['private_admin', 'non-private_admin'])
+def get_type_admin(call):
+    admin_id = 14276038
+    types = call.data.split('_')[0]
+    admin_data[admin_id] = {'types': types}
+    bot.send_message(admin_id, 'А теперь выберите количество стульев.', reply_markup=buttons15.inline_chairs_admin())
+@bot.callback_query_handler(lambda call: call.data in ['2_ad', '4_ad', '6_ad', '10_ad', '12_ad'])
+def get_chairs_admin(call):
+    admin_id = 14276038
+    chairs = int(call.data.split('_')[0])
+    type = admin_data[admin_id]['types']
+    if admins[0]=='Добавить стол':
+        add_table(chairs, type)
+        admin_data.clear()
+        admins.clear()
+        bot.send_message(admin_id, 'Столик добавлен!', reply_markup=telebot.types.ReplyKeyboardRemove())
+    elif admins[0]=='Удалить стол':
+        if find_table(chairs, type):
+            table_id = show_id(chairs, type)
+            delete_table(table_id)
+            admin_data.clear()
+            admins.clear()
+            bot.send_message(admin_id, 'Столик удален!', reply_markup=telebot.types.ReplyKeyboardRemove())
+        else:
+            bot.send_message(admin_id, 'Такого стола нет, выберите другой', reply_markup=telebot.types.ReplyKeyboardRemove())
+            admin_data.clear()
 
 bot.polling(none_stop=True)
 

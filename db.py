@@ -28,13 +28,13 @@ def register(tg_id, user_name, user_num, user_loc1, user_loc2):
     sql.execute('INSERT INTO users VALUES (?, ?, ?, ?, ?);', (tg_id, user_name, user_num, user_loc1, user_loc2))
     connection.commit()
 
-# def add_table(chairs, type, status = 'non-reserved'):
-#     sql.execute('INSERT INTO tables VALUES (?, ?, ?);', (chairs, type, status))
-#     connection.commit()
-#
-# def delete_table(table_id):
-#     sql.execute('DELETE * FROM tables WHERE table_id=?;', (table_id,))
-#     connection.commit()
+def add_table(chairs, type, status = 'non-reserved'):
+    sql.execute('INSERT INTO tables (chairs, type, status) VALUES (?, ?, ?);', (chairs, type, status))
+    connection.commit()
+
+def delete_table(table_id):
+    sql.execute('DELETE FROM tables WHERE table_id=?;', (table_id,))
+    connection.commit()
 
 def reserve_table(tg_id, table_id):
     sql.execute('INSERT INTO guests VALUES (?, ?);', (tg_id, table_id))
@@ -42,7 +42,7 @@ def reserve_table(tg_id, table_id):
     connection.commit()
 
 def cancel_reservation(tg_id, table_id):
-    sql.execute('DELETE * FROM guests WHERE tg_id=?, table_id=?;', (tg_id, table_id))
+    sql.execute('DELETE FROM guests WHERE tg_id=? AND table_id=?;', (tg_id, table_id))
     sql.execute('UPDATE tables SET status="non-reserved" WHERE table_id=?;', (table_id,))
     connection.commit()
 
@@ -67,7 +67,7 @@ def check_table1(tg_id):
     return table
 
 def check_table(table_id):
-    jj = sql.execute('SELECT chairs AND type FROM guests WHERE table_id=?;', (table_id,)).fetchone()
+    jj = sql.execute('SELECT chairs, type FROM tables WHERE table_id=?;', (table_id,)).fetchone()
     return jj
 
 

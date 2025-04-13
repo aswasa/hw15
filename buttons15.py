@@ -54,3 +54,35 @@ def inline_chairs():
     kb.row(c4, c5)
 
     return kb
+
+def admin_buttons():
+    kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    k1 = btn1=types.KeyboardButton('Добавить стол')
+    k2 = btn1=types.KeyboardButton('Удалить стол')
+
+    kb.row(k1, k2)
+
+    return kb
+
+
+def inline_type_admin():
+    kb=types.InlineKeyboardMarkup(row_width=2)
+    type1=types.InlineKeyboardButton('Приватный', callback_data='private_admin')
+    type2=types.InlineKeyboardButton('Общий', callback_data='non-private_admin')
+
+    kb.add(type1, type2)
+
+    return kb
+
+def inline_chairs_admin():
+    kb=types.InlineKeyboardMarkup(row_width=3)
+    c1= types.InlineKeyboardButton('2', callback_data='2_ad')
+    c2= types.InlineKeyboardButton('4', callback_data='4_ad')
+    c3= types.InlineKeyboardButton('6', callback_data='6_ad')
+    c4= types.InlineKeyboardButton('10', callback_data='10_ad')
+    c5= types.InlineKeyboardButton('12', callback_data='12_ad')
+
+    kb.add(c1, c2, c3)
+    kb.row(c4, c5)
+
+    return kb
